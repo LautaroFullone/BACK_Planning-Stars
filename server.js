@@ -10,7 +10,7 @@ const players = {};
 io.on("connection", socket => {
     
     const handshake = socket.id;
-
+ 
     socket.on("joinParty", data => {
         socket.join(data.partyID);
 
