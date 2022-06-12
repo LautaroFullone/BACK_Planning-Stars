@@ -7,20 +7,33 @@ const io = require('socket.io')(http);
 
 const players = {};
 
-io.on("connection", socket => {
+io.on("connection", (socket) => {
     
     const handshake = socket.id;
+
+    console.log(`${chalk.bgGreen(`Connected device: ${handshake}`)}\n`);
  
-    socket.on("joinParty", data => {
-        socket.join(data.partyID);
+    socket.on("joinParty", (data) => {
+        let partyID = data.party; let user = data.user;
 
-        console.log(`${chalk.green(`${chalk.underline(`Connected device`)}: ${handshake} on ${data.partyID}`)}`); 
+        socket.join(partyID, () => {
+            console.log(`${chalk.green(`${chalk.underline(`Join party`)}: ${user.name} on ${partyID}`)}\n`); 
+        });
 
-        //io.to(data.partyID).emit("playerJoined_socket", ('##' + 'pepe')); 
+        io.to(partyID).emit("playerJoin_socket", user.name);
     });
 
-    socket.on('disconnect', function () {
-        console.log(`${chalk.red(`${chalk.underline(`Disconnected device`)}: ${handshake}`)}\n`);
+    socket.on('leaveParty', (data) => {
+        let partyID = data.party; let user = data.user;
+
+        socket.leave(partyID, () => {
+            console.log(`${chalk.red(`${chalk.underline(`Leave party`)}: ${user.name} from party ${partyID}`)}\n`);
+        })
+        io.to(partyID).emit("playerLeave_socket", user.name);
+    });
+ 
+    socket.on('disconnect', () => {
+        console.log(`${chalk.bgRed(`Disconnected device: ${handshake}`)}\n`);
     });
     
 });
