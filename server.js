@@ -17,10 +17,11 @@ io.on("connection", (socket) => {
         let partyID = data.party; let user = data.user;
 
         socket.join(partyID, () => {
+            socket.emit("actualPlayerJoin_socket", user.name); //event to player that's joining
+            socket.broadcast.to(partyID).emit("playerJoin_socket", user.name);  //event to rest of players (except joinning player)
+            
             console.log(`${chalk.green(`${chalk.underline(`Join party`)}: ${user.name} on ${partyID}`)}\n`); 
         });
-
-        io.to(partyID).emit("playerJoin_socket", user.name);
     });
 
     socket.on('leaveParty', (data) => {
@@ -29,7 +30,7 @@ io.on("connection", (socket) => {
         socket.leave(partyID, () => {
             console.log(`${chalk.red(`${chalk.underline(`Leave party`)}: ${user.name} from party ${partyID}`)}\n`);
         })
-        io.to(partyID).emit("playerLeave_socket", user.name);
+        socket.broadcast.to(partyID).emit("playerLeave_socket", user.name);
     });
  
     socket.on('disconnect', () => {
