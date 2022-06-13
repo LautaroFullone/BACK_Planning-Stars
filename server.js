@@ -5,8 +5,6 @@ const app = require('express')();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
-const players = {};
-
 io.on("connection", (socket) => {
     
     const handshake = socket.id;
@@ -19,7 +17,6 @@ io.on("connection", (socket) => {
         socket.join(partyID, () => {
             socket.emit("actualPlayerJoin_socket", user.name); //event to player that's joining
             socket.broadcast.to(partyID).emit("playerJoin_socket", user.name);  //event to rest of players (except joinning player)
-            
             console.log(`${chalk.green(`${chalk.underline(`Join party`)}: ${user.name} on ${partyID}`)}\n`); 
         });
     });
@@ -28,9 +25,9 @@ io.on("connection", (socket) => {
         let partyID = data.party; let user = data.user;
 
         socket.leave(partyID, () => {
+            socket.broadcast.to(partyID).emit("playerLeave_socket", user.name);
             console.log(`${chalk.red(`${chalk.underline(`Leave party`)}: ${user.name} from party ${partyID}`)}\n`);
         })
-        socket.broadcast.to(partyID).emit("playerLeave_socket", user.name);
     });
  
     socket.on('disconnect', () => {
