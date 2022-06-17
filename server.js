@@ -51,7 +51,7 @@ function sendPartyPlayerEvent(partyID){
 
 function addDataToSocket(partyID, socket, userData){
     io.sockets.adapter.rooms[partyID].sockets[socket.id] = userData; 
-    socket.user = partyID;
+    socket.user = userData;
     socket.onParty = partyID;
 }
 
