@@ -5,75 +5,64 @@ const app = require('express')();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
-const players = {};
-
-io.on("connection", socket => {
-    
+io.on("connection", (socket) => {  
     const handshake = socket.id;
 
-    socket.on("joinParty", data => {
-        socket.join(data.partyID);
+    console.log(`${chalk.bgGreen(`Connected device: ${handshake}`)}\n`);
+ 
+    socket.on("joinParty", (data) => {
+        let partyID = data.party; let user = data.user;
 
-        console.log(`${chalk.green(`${chalk.underline(`Connected device`)}: ${handshake} on ${data.partyID}`)}`); 
+        socket.join(partyID, () => {            
+            socket.emit("actualPlayerJoin_socket", user); //event to player that's joining
+            socket.broadcast.to(partyID).emit("playerJoin_socket", user);  //event to rest of players (except joinning player)
+            
+            addDataToSocket(partyID, socket, user);
 
-        //io.to(data.partyID).emit("playerJoined_socket", ('##' + 'pepe'));
+            sendPartyPlayerEvent(partyID);
+
+            console.log(`${chalk.green(`${chalk.underline(`Join party`)}: ${user.name} on ${partyID}`)}\n`); 
+        });
     });
 
-    socket.on('disconnect', function () {
-        console.log(`${chalk.red(`${chalk.underline(`Disconnected device`)}: ${handshake}`)}\n`);
+    socket.on('leaveParty', (data) => {
+        let partyID = data.party; let user = data.user;
+
+        deleteSocketFromParty(socket)
+        console.log(`${chalk.red(`${chalk.underline(`Leave party`)}: ${user.name} from party ${partyID}`)}\n`);
+    });
+ 
+    socket.on('disconnect', () => {
+        deleteSocketFromParty(socket)
+        console.log(`${chalk.bgRed(`Disconnected device: ${handshake}`)}\n`);
     });
     
 });
 
 http.listen(PORT, () => {
-    console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`);  
+    console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`);   
 });
 
+//-------------------------------------------------------------------------------
 
+function sendPartyPlayerEvent(partyID){
+    io.to(partyID).emit("partyPlayers_socket", getPartyPlayers(partyID));
+}
 
- 
-/*const express = require('express');
-const app = express();
-const chalk = require('chalk');
-const cors = require('cors');
+function addDataToSocket(partyID, socket, userData){
+    io.sockets.adapter.rooms[partyID].sockets[socket.id] = userData; 
+    socket.user = userData;
+    socket.onParty = partyID;
+}
 
-app.use(cors());
-const options = {
-    cors: {
-        origin: 'http://localhost:4200',
-    },
-};
+function getPartyPlayers(partyID){
+    if (io.sockets.adapter.rooms[partyID])
+        return io.sockets.adapter.rooms[partyID].sockets
+} 
 
-const server = require('http').Server(app);
-const io = require('socket.io')(server, options);
-
-app.get('/', function (req, res) {
-    res.send('Hello World!');
-});
-
-server.listen(3000, function () {
-    console.log('\n')
-    console.log(`>> Socket listo y escuchando por el puerto: ${chalk.green('3000')}`)
-})
-
-io.on('connection', function (socket) {
-
-    console.log('connection');
-    const handshake = socket.id;
-
-    let { nameParty } = socket.handshake.query;
-    console.log(`${chalk.green(`Nuevo dispositivo: ${handshake}`)} conentado a la ${nameParty}`);
-    /*socket.join(nameRoom)
-
-    socket.on('evento', (res) => {
-        // Emite el mensaje a todos lo miembros de las sala menos a la persona que envia el mensaje   
-        socket.to(nameRoom).emit('evento', res);
-
+function deleteSocketFromParty(socket){
+    socket.leave(socket.onParty, () => {
+        sendPartyPlayerEvent(socket.onParty);
+        socket.broadcast.to(socket.onParty).emit("playerLeave_socket", socket.user);
     })
-
-
-    socket.on('disconnect', function () {
-        console.log('user disconnected');
-    });
-});
-*/
+}
