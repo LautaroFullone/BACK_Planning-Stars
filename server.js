@@ -1,4 +1,5 @@
 const chalk = require('chalk'); 
+const { Console } = require('console');
 const PORT = 3000;
 
 const app = require('express')();
@@ -18,11 +19,19 @@ io.on("connection", (socket) => {
             socket.broadcast.to(partyID).emit("playerJoin_socket", user);  //event to rest of players (except joinning player)
             
             addDataToSocket(partyID, socket, user);
-
             sendPartyPlayerEvent(partyID);
+
+            if(getSelectedUS(partyID))
+                sendSelectedUS(socket, partyID, false)
 
             console.log(`${chalk.green(`${chalk.underline(`Join party`)}: ${user.name} on ${partyID}`)}\n`); 
         });
+    });
+
+    socket.on('selectUS', (data) => {
+        let partyID = data.party; let userStory = data.us;
+        setSelectedUS(userStory, partyID);
+        sendSelectedUS(socket, partyID, true);
     });
 
     socket.on('leaveParty', (data) => {
@@ -45,6 +54,21 @@ http.listen(PORT, () => {
 
 //-------------------------------------------------------------------------------
 
+function sendSelectedUS(socket, partyID, isOwner) {
+    if(isOwner)
+        socket.broadcast.to(partyID).emit("selectedUS_socket", getSelectedUS(partyID));
+    else
+        socket.emit("selectedUS_socket", getSelectedUS(partyID));
+}
+
+function setSelectedUS(userStory, partyID){
+    io.sockets.adapter.rooms[partyID].selectedUS = userStory;
+}
+
+function getSelectedUS(partyID) {
+    return io.sockets.adapter.rooms[partyID].selectedUS;
+}
+
 function sendPartyPlayerEvent(partyID){
     io.to(partyID).emit("partyPlayers_socket", getPartyPlayers(partyID));
 }
@@ -56,7 +80,7 @@ function addDataToSocket(partyID, socket, userData){
 }
 
 function getPartyPlayers(partyID){
-    if (io.sockets.adapter.rooms[partyID])
+    if(io.sockets.adapter.rooms[partyID])
         return io.sockets.adapter.rooms[partyID].sockets
 } 
 
