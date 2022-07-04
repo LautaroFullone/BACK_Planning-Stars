@@ -1,5 +1,4 @@
 const chalk = require('chalk'); 
-const { Console } = require('console');
 const PORT = 3000;
 
 const app = require('express')();
