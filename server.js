@@ -32,8 +32,8 @@ io.on("connection", (socket) => {
                 let isAdminConnected = socketsData.find(item => item.isOwner == true);
 
                 if(isAdminConnected){
-                    connectSocketIntoParty(socket, partyID, userJoining, false);
                     socket.emit("hasUserAccess_socket", { hasAccess: true, isOwner: false });          
+                    connectSocketIntoParty(socket, partyID, userJoining, false);
                 }
                 else{
                     socket.emit("hasUserAccess_socket", { hasAccess: false, reason:'Admin is not connected, please wait' });
@@ -41,6 +41,11 @@ io.on("connection", (socket) => {
             }
         }      
     });
+
+    socket.on('isSocketConnected', () => {
+        let isConnected = socket.connected;
+        socket.emit("socketConnected_socket", isConnected);
+    })
     
     socket.on('isUserPartyOwner', () => {
         let isOwner = socket.planningData.isOwner;
@@ -90,23 +95,6 @@ http.listen(PORT, () => {
 });
 
 //-------------------------------------------------------------------------------
-function connectSocketIntoParty(socket, partyID, userJoining, isOwner) {
-    console.log('connecting', userJoining.name);
-    
-    socket.join(partyID, ()=> {
-        addDataToSocket(socket, partyID, userJoining, isOwner);
-
-        let socketsData = getSocketsFromParty(partyID)
-
-        io.to(socket.planningData.onParty).emit("partyPlayers_socket", socketsData);
-        io.to(socket.planningData.onParty).emit("playerJoin_socket", userJoining);
-        //console.log('sockets to emit joining', socketsData);
-
-        console.log(`${chalk.green(`${chalk.underline(`Join party`)}: ${userJoining.name} on ${partyID}`)}\n`);
-    })
-    console.log('test');
-}
-
 function addDataToSocket(socket, partyID, user, isOwner) {
     socket.planningData = {
         onParty: partyID,
@@ -114,6 +102,23 @@ function addDataToSocket(socket, partyID, user, isOwner) {
         hasVote: false,
         isOwner: isOwner
     };
+}
+
+function connectSocketIntoParty(socket, partyID, userJoining, isOwner) {
+
+    socket.join(partyID, () => {
+        io.to(partyID).emit("playerJoin_socket", userJoining);
+
+        addDataToSocket(socket, partyID, userJoining, isOwner);
+
+        let socketsData = getSocketsFromParty(partyID)
+        
+        io.to(socket.planningData.onParty).emit("partyPlayers_socket", socketsData);
+        
+        io.to(partyID).emit("partyPlayers_socket", socketsData);
+
+        console.log(`${chalk.green(`${chalk.underline(`Join party`)}: ${userJoining.name} on ${partyID}`)}\n`);
+    }) 
 }
 
 function getSocketsFromParty(partyID) {
