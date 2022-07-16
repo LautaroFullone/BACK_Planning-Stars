@@ -7,51 +7,73 @@ const PORT = 3000;
 
 io.on("connection", (socket) => {
     const handshake = socket.id;
-    let lastDisconnected = undefined;
 
     socket.planningData = {};
 
     console.log(`${chalk.bgGreen(`Connected device: ${handshake}`)}\n`);
 
+    socket.on("hasUserAccess", (data) => {
+        let partyID = data.party;
+        let userJoining = data.user;
+        let partyOwnerID = data.partyOwnerID;
+
+        let isUserPartyOwner = (partyOwnerID == userJoining.id)
+        
+        socket.planningData.isOwner = isUserPartyOwner;
+
+        if(isUserPartyOwner){
+            socket.emit('test_socket', { hasAccess: true, isOwner: true,
+                                         reason: 'User is the admin' })
+
+            addDataToSocket(socket, partyID, userJoining)
+        }
+        else {
+            let socketsData = getSocketsFromParty(partyID)
+
+            if(socketsData) {
+                let isAdminConnected = socketsData.find(item => item.isOwner == true);
+
+                if(isAdminConnected) { 
+                    socket.emit('test_socket', { hasAccess: true, isOwner: false,
+                                                 reason: 'Admin is connected' })
+
+                    addDataToSocket(socket, partyID, userJoining)
+                }
+                else
+                    socket.emit('test_socket', { hasAccess: false, isOwner: false,
+                                                 reason: 'Admin is not connected, please wait' })                 
+            }
+        }
+    })
+
+    socket.on('isUserPartyOwner', () => {
+        let isOwner = socket.planningData.isOwner;
+        socket.emit("userPartyOwner_socket", isOwner);
+    })
+
     socket.on("joinParty", (data) => {
         let partyID = data.party;
         let userJoining = data.user;
-        let isOwner = data.isOwner;
 
-                
-        if(isOwner) {
-            connectSocketIntoParty(socket, partyID, userJoining, true);
-            setPartyOwnerID(partyID, userJoining.Id)
-
-            socket.emit("hasUserAccess_socket", { hasAccess: true, isOwner: true});
-        }
-        else { 
+        socket.join(partyID, () => {
+            io.to(partyID).emit("playerJoin_socket", userJoining);
+            
             let socketsData = getSocketsFromParty(partyID)
+            
+            //this only is needed to owner, it waits 0,5 second becase component loads after this event is emitted
+            setTimeout(() => { io.to(partyID).emit("partyPlayers_socket", socketsData) }, 500);
+            
+            socket.emit("userPartyOwner_socket", socket.planningData.isOwner);
 
-            if(socketsData){
-                let isAdminConnected = socketsData.find(item => item.isOwner == true);
-
-                if(isAdminConnected){
-                    socket.emit("hasUserAccess_socket", { hasAccess: true, isOwner: false });          
-                    connectSocketIntoParty(socket, partyID, userJoining, false);
-                }
-                else{
-                    socket.emit("hasUserAccess_socket", { hasAccess: false, reason:'Admin is not connected, please wait' });
-                }
-            }
-        }      
+            console.log(`${chalk.green(`${chalk.underline(`Join party`)}: ${userJoining.name} on ${partyID}`)}\n`);
+        }) 
     });
-
+    
     socket.on('isSocketConnected', () => {
         let isConnected = socket.connected;
         socket.emit("socketConnected_socket", isConnected);
     })
     
-    socket.on('isUserPartyOwner', () => {
-        let isOwner = socket.planningData.isOwner;
-        socket.emit("userPartyOwner_socket", isOwner);
-    })
-   
     socket.on('selectUS', (data) => {  //i think it's not necessary anymore to have a method to set/get US
         let userStory = data.us;
 
@@ -73,7 +95,7 @@ io.on("connection", (socket) => {
         socket.broadcast.to(socket.planningData.onParty).emit("playerVotation_socket", votation);
     });
 
-    socket.on('leaveParty', (data) => {  //si el admin se va, este se llama muchas veces
+    socket.on('leaveParty', (data) => {  
         let partyID = data.party; let user = data.user;
         let adminLeave = data.adminLeave;
 
@@ -84,7 +106,7 @@ io.on("connection", (socket) => {
 
     socket.on('disconnect', () => {
         deleteSocketFromParty(socket)
-        
+
         console.log(`${chalk.bgRed(`Disconnected device: ${handshake}`)}\n`);
     });
 
@@ -95,6 +117,13 @@ http.listen(PORT, () => {
 });
 
 //-------------------------------------------------------------------------------
+function addDataToSocket(socket, partyID, user) {
+    socket.planningData.onParty = partyID;
+    socket.planningData.user = user;
+    socket.planningData.hasVote = false;
+}
+
+/*
 function addDataToSocket(socket, partyID, user, isOwner) {
     socket.planningData = {
         onParty: partyID,
@@ -102,24 +131,7 @@ function addDataToSocket(socket, partyID, user, isOwner) {
         hasVote: false,
         isOwner: isOwner
     };
-}
-
-function connectSocketIntoParty(socket, partyID, userJoining, isOwner) {
-
-    socket.join(partyID, () => {
-        io.to(partyID).emit("playerJoin_socket", userJoining);
-
-        addDataToSocket(socket, partyID, userJoining, isOwner);
-
-        let socketsData = getSocketsFromParty(partyID)
-        
-        io.to(socket.planningData.onParty).emit("partyPlayers_socket", socketsData);
-        
-        io.to(partyID).emit("partyPlayers_socket", socketsData);
-
-        console.log(`${chalk.green(`${chalk.underline(`Join party`)}: ${userJoining.name} on ${partyID}`)}\n`);
-    }) 
-}
+}*/
 
 function getSocketsFromParty(partyID) {
     let socketsDatalist = new Array();
@@ -137,21 +149,8 @@ function getSocketsFromParty(partyID) {
     return socketsDatalist;
 }
 
-function setPartyOwnerID(partyID, userID) {
-    io.sockets.adapter.rooms[partyID].ownerUserID = userID;
-}
-function getPartyOwnerID(partyID) {
-    if (io.sockets.adapter.rooms[partyID])
-        return io.sockets.adapter.rooms[partyID].ownerUserID;
-}
-
 function setSelectedUS(userStory, partyID) {
     io.sockets.adapter.rooms[partyID].selectedUS = userStory;
-}
-
-function getSelectedUS(partyID) {
-    if (io.sockets.adapter.rooms[partyID])
-        return io.sockets.adapter.rooms[partyID].selectedUS;
 }
 
 function isObjEmpty(obj) {
@@ -159,9 +158,10 @@ function isObjEmpty(obj) {
 }
 
 function deleteSocketFromParty(socket, adminLeave) {
-    if (!isObjEmpty(socket.planningData)) {
-
+    
+    if(!isObjEmpty(socket.planningData)) {
         let partyID = socket.planningData.onParty;
+
         socket.leave(partyID, () => {
             let socketsData = getSocketsFromParty(partyID)
 
@@ -170,12 +170,12 @@ function deleteSocketFromParty(socket, adminLeave) {
             if(socket.planningData.isOwner){
                 socket.broadcast.to(partyID).emit("adminLeave_socket", { user: socket.planningData.user });
             }
-            else{
-                if (!adminLeave) //if admin left do not send this notification
+            else {
+                if(!adminLeave) //if admin left do not send this notification
                     socket.broadcast.to(partyID).emit("playerLeave_socket", { user: socket.planningData.user,
                                                                               isOwner: socket.planningData.isOwner });
             }     
-            socket.planningData={};
+            socket.planningData = {};
         })
     }
 }
