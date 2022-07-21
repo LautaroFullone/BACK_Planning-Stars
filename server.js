@@ -22,7 +22,7 @@ io.on("connection", (socket) => {
         socket.planningData.isOwner = isUserPartyOwner;
 
         if(isUserPartyOwner){
-            socket.emit('test_socket', { hasAccess: true, isOwner: true,
+            socket.emit('hasUserAccess_socket', { hasAccess: true, isOwner: true,
                                          reason: 'User is the admin' })
 
             addDataToSocket(socket, partyID, userJoining)
@@ -34,13 +34,13 @@ io.on("connection", (socket) => {
                 let isAdminConnected = socketsData.find(item => item.isOwner == true);
 
                 if(isAdminConnected) { 
-                    socket.emit('test_socket', { hasAccess: true, isOwner: false,
+                    socket.emit('hasUserAccess_socket', { hasAccess: true, isOwner: false,
                                                  reason: 'Admin is connected' })
 
                     addDataToSocket(socket, partyID, userJoining)
                 }
                 else
-                    socket.emit('test_socket', { hasAccess: false, isOwner: false,
+                    socket.emit('hasUserAccess_socket', { hasAccess: false, isOwner: false,
                                                  reason: 'Admin is not connected, please wait' })                 
             }
         }
@@ -122,16 +122,6 @@ function addDataToSocket(socket, partyID, user) {
     socket.planningData.user = user;
     socket.planningData.hasVote = false;
 }
-
-/*
-function addDataToSocket(socket, partyID, user, isOwner) {
-    socket.planningData = {
-        onParty: partyID,
-        user: user,
-        hasVote: false,
-        isOwner: isOwner
-    };
-}*/
 
 function getSocketsFromParty(partyID) {
     let socketsDatalist = new Array();
