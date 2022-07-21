@@ -76,10 +76,11 @@ io.on("connection", (socket) => {
     
     socket.on('selectUS', (data) => {  //i think it's not necessary anymore to have a method to set/get US
         let userStory = data.us;
+        let partyID = socket.planningData.onParty;
 
         setSelectedUS(userStory, socket.planningData.onParty);
     
-        io.to(socket.planningData.onParty).emit("selectedUS_socket", userStory);
+        socket.broadcast.to(partyID).emit("selectedUS_socket", userStory);
     });
 
     socket.on('partyPlayers', (data) => { 
