@@ -13,17 +13,19 @@ io.on("connection", (socket) => {
     console.log(`${chalk.bgGreen(`Connected device: ${handshake}`)}\n`);
 
     socket.on("hasUserAccess", (data) => {
-        let partyID = data.party;
         let userJoining = data.user;
-        let partyOwnerID = data.partyOwnerID;
+        let partyID = data.party.id;
+        let partyOwnerID = data.party.partyOwnerId;
+        let partySize = data.party.maxPlayer;
+        
+        let actualSize = getCountPlayers(partyID);
 
         let isUserPartyOwner = (partyOwnerID == userJoining.id)
-        
         socket.planningData.isOwner = isUserPartyOwner;
 
         if(isUserPartyOwner){
             socket.emit('hasUserAccess_socket', { hasAccess: true, isOwner: true,
-                                         reason: 'User is the admin' })
+                                                  reason: 'User is the admin' })
 
             addDataToSocket(socket, partyID, userJoining)
         }
@@ -34,14 +36,24 @@ io.on("connection", (socket) => {
                 let isAdminConnected = socketsData.find(item => item.isOwner == true);
 
                 if(isAdminConnected) { 
-                    socket.emit('hasUserAccess_socket', { hasAccess: true, isOwner: false,
-                                                 reason: 'Admin is connected' })
 
-                    addDataToSocket(socket, partyID, userJoining)
+                    let actualSize = getCountPlayers(partyID);
+                    if(actualSize + 1 <= partySize){
+                        socket.emit('hasUserAccess_socket', { hasAccess: true, isOwner: false,
+                                                              reason: 'Admin is connected' })
+
+                        addDataToSocket(socket, partyID, userJoining)
+                    }
+                    else {
+                        socket.emit('hasUserAccess_socket', { hasAccess: false, isOwner: false,
+                                                              reason: 'The party size is completed'
+                        })
+                    }
+                    
                 }
                 else
                     socket.emit('hasUserAccess_socket', { hasAccess: false, isOwner: false,
-                                                 reason: 'Admin is not connected, please wait' })                 
+                                                          reason: 'Admin is not connected, please wait' })                 
             }
         }
     })
@@ -66,6 +78,10 @@ io.on("connection", (socket) => {
             socket.emit("userPartyOwner_socket", socket.planningData.isOwner);
 
             console.log(`${chalk.green(`${chalk.underline(`Join party`)}: ${userJoining.name} on ${partyID}`)}\n`);
+
+            var clients = getCountPlayers(partyID)
+            console.log('clients', clients);
+
         }) 
     });
     
@@ -142,6 +158,15 @@ function getSocketsFromParty(partyID) {
 
 function setSelectedUS(userStory, partyID) {
     io.sockets.adapter.rooms[partyID].selectedUS = userStory;
+}
+
+function getCountPlayers(partyID) {
+    let cant = 0;
+
+    if (io.sockets.adapter.rooms[partyID])
+        cant = io.sockets.adapter.rooms[partyID].length;
+
+    return cant;
 }
 
 function isObjEmpty(obj) {
