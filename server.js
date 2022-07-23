@@ -18,8 +18,6 @@ io.on("connection", (socket) => {
         let partyOwnerID = data.party.partyOwnerId;
         let partySize = data.party.maxPlayer;
         
-        let actualSize = getCountPlayers(partyID);
-
         let isUserPartyOwner = (partyOwnerID == userJoining.id)
         socket.planningData.isOwner = isUserPartyOwner;
 
@@ -112,13 +110,15 @@ io.on("connection", (socket) => {
         socket.broadcast.to(socket.planningData.onParty).emit("playerVotation_socket", votation);
     });
 
-    socket.on('leaveParty', (data) => {  
-        let partyID = data.party; let user = data.user;
-        let adminLeave = data.adminLeave;
+    socket.on('leaveParty', () => { 
+        if (!isObjEmpty(socket.planningData)) {
+            let partyID = socket.planningData.onParty; 
+            let user = socket.planningData.user;
 
-        deleteSocketFromParty(socket, adminLeave)
+            deleteSocketFromParty(socket)
 
-        console.log(`${chalk.red(`${chalk.underline(`Leave party`)}: ${user.name} from party ${partyID}`)}\n`);
+            console.log(`${chalk.red(`${chalk.underline(`Leave party`)}: ${user.name} from party ${partyID}`)}\n`);
+        }
     });
 
     socket.on('disconnect', () => {
@@ -173,10 +173,11 @@ function isObjEmpty(obj) {
     return Object.keys(obj).length === 0;
 }
 
-function deleteSocketFromParty(socket, adminLeave) {
+function deleteSocketFromParty(socket) {
     
     if(!isObjEmpty(socket.planningData)) {
         let partyID = socket.planningData.onParty;
+        let isSocketOwner = socket.planningData.isOwner;
 
         socket.leave(partyID, () => {
             let socketsData = getSocketsFromParty(partyID)
@@ -187,9 +188,9 @@ function deleteSocketFromParty(socket, adminLeave) {
                 socket.broadcast.to(partyID).emit("adminLeave_socket", { user: socket.planningData.user });
             }
             else {
-                if(!adminLeave) //if admin left do not send this notification
+                if (!isSocketOwner) //if admin left do not send this notification
                     socket.broadcast.to(partyID).emit("playerLeave_socket", { user: socket.planningData.user,
-                                                                              isOwner: socket.planningData.isOwner });
+                                                                              isOwner: isSocketOwner });
             }     
             socket.planningData = {};
         })
