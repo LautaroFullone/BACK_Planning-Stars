@@ -77,9 +77,6 @@ io.on("connection", (socket) => {
 
             console.log(`${chalk.green(`${chalk.underline(`Join party`)}: ${userJoining.name} on ${partyID}`)}\n`);
 
-            var clients = getCountPlayers(partyID)
-            console.log('clients', clients);
-
         }) 
     });
     
