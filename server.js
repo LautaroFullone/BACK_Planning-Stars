@@ -103,6 +103,7 @@ io.on("connection", (socket) => {
 
     socket.on('playerVotation', (data) => {
         let votation = data.votation;
+        socket.planningData.hasVote = true;
 
         socket.broadcast.to(socket.planningData.onParty).emit("playerVotation_socket", votation);
     });
@@ -131,6 +132,7 @@ http.listen(PORT, () => {
 });
 
 //-------------------------------------------------------------------------------
+
 function addDataToSocket(socket, partyID, user) {
     socket.planningData.onParty = partyID;
     socket.planningData.user = user;
