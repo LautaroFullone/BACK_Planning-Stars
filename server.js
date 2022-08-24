@@ -84,15 +84,14 @@ io.on("connection", (socket) => {
         let isConnected = socket.connected;
         socket.emit("socketConnected_socket", isConnected);
     })
-    
-    socket.on('selectUS', (data) => {  //i think it's not necessary anymore to have a method to set/get US
+
+    socket.on('planningStarted', (data) => {
         let userStory = data.us;
         let partyID = socket.planningData.onParty;
 
-        setSelectedUS(userStory, socket.planningData.onParty);
-    
-        socket.broadcast.to(partyID).emit("selectedUS_socket", userStory);
-    });
+        socket.broadcast.to(partyID).emit("planningStarted_socket", userStory);
+        
+    })
 
     socket.on('partyPlayers', (data) => { 
         let partyID = data.party; 
@@ -153,10 +152,6 @@ function getSocketsFromParty(partyID) {
         })
     }
     return socketsDatalist;
-}
-
-function setSelectedUS(userStory, partyID) {
-    io.sockets.adapter.rooms[partyID].selectedUS = userStory;
 }
 
 function getCountPlayers(partyID) {
