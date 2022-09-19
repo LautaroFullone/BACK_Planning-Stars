@@ -76,7 +76,6 @@ io.on("connection", (socket) => {
             socket.emit("userPartyOwner_socket", socket.planningData.isOwner);
 
             console.log(`${chalk.green(`${chalk.underline(`Join party`)}: ${userJoining.name} on ${partyID}`)}\n`);
-
         }) 
     });
     
@@ -90,7 +89,6 @@ io.on("connection", (socket) => {
         let partyID = socket.planningData.onParty;
 
         socket.broadcast.to(partyID).emit("planningStarted_socket", userStory);
-        
     })
 
     socket.on('partyPlayers', (data) => { 
@@ -102,9 +100,18 @@ io.on("connection", (socket) => {
 
     socket.on('playerVotation', (data) => {
         let votation = data.votation;
-        socket.planningData.hasVote = true;
+        
+        let dataInfo = {    
+            userID: votation.userID, 
+            votation: {
+                hasVote: true, 
+                value: votation.value
+            }    
+        }
 
-        socket.broadcast.to(socket.planningData.onParty).emit("playerVotation_socket", votation);
+        socket.planningData.votation = dataInfo.votation;
+
+        socket.broadcast.to(socket.planningData.onParty).emit("playerVotation_socket", dataInfo);
     });
 
     socket.on('leaveParty', () => { 
@@ -135,7 +142,7 @@ http.listen(PORT, () => {
 function addDataToSocket(socket, partyID, user) {
     socket.planningData.onParty = partyID;
     socket.planningData.user = user;
-    socket.planningData.hasVote = false;
+    socket.planningData.votation = { hasVote: false };
 }
 
 function getSocketsFromParty(partyID) {
