@@ -88,7 +88,7 @@ io.on("connection", (socket) => {
         let userStory = data.us;
         let partyID = socket.planningData.onParty;
 
-        socket.broadcast.to(partyID).emit("planningStarted_socket", userStory);
+        io.to(partyID).emit("planningStarted_socket", userStory);
     })
 
     socket.on('partyPlayers', (data) => { 
