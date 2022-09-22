@@ -91,6 +91,13 @@ io.on("connection", (socket) => {
         io.to(partyID).emit("planningStarted_socket", userStory);
     })
 
+    socket.on('plannigConcluded', () => {
+    
+        let partyID = socket.planningData.onParty;
+
+        io.to(partyID).emit("plannigConcluded_socket");
+    })
+    
     socket.on('partyPlayers', (data) => { 
         let partyID = data.party; 
         let socketsData = getSocketsFromParty(partyID)
