@@ -88,9 +88,15 @@ io.on("connection", (socket) => {
         let userStory = data.us;
         let partyID = socket.planningData.onParty;
 
-        socket.broadcast.to(partyID).emit("planningStarted_socket", userStory);
+        io.to(partyID).emit("planningStarted_socket", userStory);
     })
 
+    socket.on('plannigConcluded', (data) => {
+        let partyID = socket.planningData.onParty;
+
+        io.to(partyID).emit("plannigConcluded_socket", data.interruptedByOwner);
+    })
+    
     socket.on('partyPlayers', (data) => { 
         let partyID = data.party; 
         let socketsData = getSocketsFromParty(partyID)
