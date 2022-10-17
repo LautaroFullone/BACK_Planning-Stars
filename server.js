@@ -94,11 +94,11 @@ io.on("connection", (socket) => {
     socket.on('plannigConcluded', (data) => {
         let partyID = socket.planningData.onParty;
 
-        io.to(partyID).emit("plannigConcluded_socket", data.interruptedByOwner);
+        io.to(partyID).emit("plannigConcluded_socket", data);
     })
     
-    socket.on('partyPlayers', (data) => { 
-        let partyID = data.party; 
+    socket.on('partyPlayers', () => { 
+        let partyID = socket.planningData.onParty;
         let socketsData = getSocketsFromParty(partyID)
 
         io.to(partyID).emit("partyPlayers_socket", socketsData);
