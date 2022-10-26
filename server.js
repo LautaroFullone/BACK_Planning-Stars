@@ -3,7 +3,8 @@ const http = require('http').Server(app);
 // const io = require('socket.io')(http);
 const io = require("socket.io")(http, {
     cors: {
-        origin: "https://planning-stars.vercel.app/"
+        origin: "https://planning-stars.vercel.app/",
+        credentials: true
     }
 });
 const chalk = require('chalk');
