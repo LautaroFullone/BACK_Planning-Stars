@@ -1,9 +1,17 @@
 const app = require('express')();
 const http = require('http').Server(app);
-const io = require('socket.io')(http);
+// const io = require('socket.io')(http);
+const io = require("socket.io")(http, {
+    cors: {
+        origin: "https://planningstar.vercel.app",
+        methods: ["GET", "POST", "PUT"]
+    }
+});
 const chalk = require('chalk');
 
 const PORT = 3000;
+
+
 
 io.on("connection", (socket) => {
     const handshake = socket.id;
