@@ -3,7 +3,7 @@
 const express = require('express');
 var cors = require('cors');
 var app = express(); app.use(cors());
-const http = require('http').Server(express);
+const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const chalk = require('chalk');
 
@@ -22,9 +22,9 @@ const INDEX = '/index.html';
 //     .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
 //     .listen(PORT, () => console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`) );
 
-// http.listen(PORT, () => {
-//     console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`);
-// });
+ http.listen(PORT, () => {
+     console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`);
+ });
 
 // const io = require("socket.io")(http, {
 //     cors: {
