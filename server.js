@@ -1,22 +1,26 @@
 'use strict';
 
-const app = require('express');
-const http = require('http').Server(app);
-// const io = require('socket.io')(http);
-const io = require("socket.io")(http, {
-    cors: {
-        origin: "https://planning-stars.herokuapp.com/",
-        credentials: true
-    }
-});
+const express = require('express');
+var cors = require('cors');
+var app = express(); app.use(cors());
+const http = require('http').Server(express);
+const io = require('socket.io')(http);
 const chalk = require('chalk');
+
+// const io = require("socket.io")(http, {
+//     cors: {
+//         origin: "https://planning-stars.herokuapp.com/",
+//         credentials: true
+//     }
+// });
+
 
 const PORT = process.env.PORT || 3000;
 const INDEX = '/index.html';
 
-const server = app()
-    .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
-    .listen(PORT, () => console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`) );
+// const server = express()
+//     .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
+//     .listen(PORT, () => console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`) );
 
 // http.listen(PORT, () => {
 //     console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`);
