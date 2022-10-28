@@ -1,24 +1,36 @@
-const app = require('express')();
+'use strict';
+
+const { Server } = require('ws');
+const app = require('express');
 const http = require('http').Server(app);
-// const io = require('socket.io')(http);
-const io = require("socket.io")(http, {
-    cors: {
-        origin: "https://planning-stars.vercel.app/",
-        credentials: true
-    }
-});
+const io = require('socket.io')(http);
 const chalk = require('chalk');
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const INDEX = '/index.html';
 
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "https://planning-stars.vercel.app/"); 
-    res.header('Access-Control-Allow-Credentials', true);
-    res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method, Access-Control-Allow-Credentials');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-    res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
-    next();
-});
+const server = app()
+    .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
+    .listen(PORT, () => console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`) );
+
+// http.listen(PORT, () => {
+//     console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`);
+// });
+
+// const io = require("socket.io")(http, {
+//     cors: {
+//         origin: "https://planning-stars.vercel.app/",
+//         credentials: true
+//     }
+// });
+// app.use((req, res, next) => {
+//     res.header("Access-Control-Allow-Origin", "https://planning-stars.vercel.app/"); 
+//     res.header('Access-Control-Allow-Credentials', true);
+//     res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method, Access-Control-Allow-Credentials');
+//     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+//     res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
+//     next();
+// });
 
 io.on("connection", (socket) => {
     const handshake = socket.id;
@@ -152,10 +164,6 @@ io.on("connection", (socket) => {
         console.log(`${chalk.bgRed(`Disconnected device: ${handshake}`)}\n`);
     });
 
-});
-
-http.listen(PORT, () => {
-    console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`);
 });
 
 //-------------------------------------------------------------------------------

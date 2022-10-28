@@ -1,21 +1,28 @@
 {
-  "name": "back_planning-stars",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server.js",
-    "build": "npm install --force"
-  },
-  "author": "Lautaro",
-  "license": "ISC",
-  "dependencies": {
-    "@types/socket.io": "^2.1.10",
-    "chalk": "^4.1.2",
-    "cors": "^2.8.5",
-    "express": "^4.17.1",
-    "nodemon": "^2.0.16",
-    "socket.io": "^2.3.0"
-  }
+    "name": "back_planning-stars",
+    "version": "1.0.0",
+    "description": "",
+    "main": "server.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "dev": "nodemon server.js",
+        "build": "npm install --force"
+    },
+    "author": "Lautaro",
+    "license": "ISC",
+    "dependencies": {
+        "@types/socket.io": "^2.1.10",
+        "bufferutil": "^4.0.7",
+        "chalk": "^4.1.2",
+        "cors": "^2.8.5",
+        "express": "^4.18.2",
+        "nodemon": "^2.0.16",
+        "socket.io": "^2.3.0",
+        "utf-8-validate": "^5.0.10",
+        "ws": "^8.10.0"
+    },
+    "engines": {
+        "node": "16.14.0",
+        "npm": "8.5.2"
+    }
 }
