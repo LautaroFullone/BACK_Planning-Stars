@@ -101,9 +101,10 @@ io.on("connection", (socket) => {
 
     socket.on('planningStarted', (data) => {
         let userStory = data.us;
+        let isFirstRound = data.isFirstRound;
         let partyID = socket.planningData.onParty;
 
-        io.to(partyID).emit("planningStarted_socket", userStory);
+        io.to(partyID).emit("planningStarted_socket", { userStory, isFirstRound });
     })
 
     socket.on('plannigConcluded', (data) => {
