@@ -1,9 +1,22 @@
-const app = require('express')();
+'use strict';
+
+const express = require('express');
+var cors = require('cors');
+var app = express(); app.use(cors());
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const chalk = require('chalk');
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const INDEX = '/index.html';
+
+// const server = express()
+//     .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
+//     .listen(PORT, () => console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`) );
+
+http.listen(PORT, () => {
+    console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`);
+});
 
 io.on("connection", (socket) => {
     const handshake = socket.id;
@@ -86,9 +99,10 @@ io.on("connection", (socket) => {
 
     socket.on('planningStarted', (data) => {
         let userStory = data.us;
+        let isFirstRound = data.isFirstRound;
         let partyID = socket.planningData.onParty;
 
-        io.to(partyID).emit("planningStarted_socket", userStory);
+        io.to(partyID).emit("planningStarted_socket", { userStory, isFirstRound });
     })
 
     socket.on('plannigConcluded', (data) => {
@@ -137,10 +151,6 @@ io.on("connection", (socket) => {
         console.log(`${chalk.bgRed(`Disconnected device: ${handshake}`)}\n`);
     });
 
-});
-
-http.listen(PORT, () => {
-    console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`);
 });
 
 //-------------------------------------------------------------------------------
