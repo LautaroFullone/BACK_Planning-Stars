@@ -7,13 +7,6 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const chalk = require('chalk');
 
-// const io = require("socket.io")(http, {
-//     cors: {
-//         origin: "https://planning-stars.herokuapp.com/",
-//         credentials: true
-//     }
-// });
-
 
 const PORT = process.env.PORT || 3000;
 const INDEX = '/index.html';
@@ -22,16 +15,9 @@ const INDEX = '/index.html';
 //     .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
 //     .listen(PORT, () => console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`) );
 
- http.listen(PORT, () => {
-     console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`);
- });
-
-// const io = require("socket.io")(http, {
-//     cors: {
-//         origin: "https://planning-stars.vercel.app/",
-//         credentials: true
-//     }
-// });
+http.listen(PORT, () => {
+    console.log(`\n${chalk.blue(`>> Server listening on port ${PORT}`)}\n`);
+});
 
 io.on("connection", (socket) => {
     const handshake = socket.id;
