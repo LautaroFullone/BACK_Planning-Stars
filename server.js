@@ -192,7 +192,6 @@ function deleteSocketFromParty(socket) {
         let isSocketOwner = socket.planningData.isOwner;
 
         socket.leave(partyID, () => {
-            let socketsData = getSocketsFromParty(partyID)
 
             if(socket.planningData.isOwner){
                 socket.broadcast.to(partyID).emit("adminLeave_socket", { user: socket.planningData.user });
