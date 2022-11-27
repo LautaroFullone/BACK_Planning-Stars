@@ -79,7 +79,7 @@ io.on("connection", (socket) => {
         let userJoining = data.user;
 
         socket.join(partyID, () => {
-            io.to(partyID).emit("playerJoin_socket", userJoining);
+            io.to(partyID).emit("playerJoin_socket", socket.planningData );
             
             let socketsData = getSocketsFromParty(partyID)
             
@@ -123,13 +123,8 @@ io.on("connection", (socket) => {
         
         let dataInfo = {    
             userID: votation.userID, 
-            votation: {
-                hasVote: true, 
-                value: votation.value
-            }    
+            value: votation.value
         }
-
-        socket.planningData.votation = dataInfo.votation;
 
         socket.broadcast.to(socket.planningData.onParty).emit("playerVotation_socket", dataInfo);
     });
@@ -158,7 +153,7 @@ io.on("connection", (socket) => {
 function addDataToSocket(socket, partyID, user) {
     socket.planningData.onParty = partyID;
     socket.planningData.user = user;
-    socket.planningData.votation = { hasVote: false };
+    socket.planningData.votations = undefined;
 }
 
 function getSocketsFromParty(partyID) {
@@ -197,17 +192,13 @@ function deleteSocketFromParty(socket) {
         let isSocketOwner = socket.planningData.isOwner;
 
         socket.leave(partyID, () => {
-            let socketsData = getSocketsFromParty(partyID)
-
-            io.to(partyID).emit("partyPlayers_socket", socketsData);
 
             if(socket.planningData.isOwner){
                 socket.broadcast.to(partyID).emit("adminLeave_socket", { user: socket.planningData.user });
             }
             else {
                 if (!isSocketOwner) //if admin left do not send this notification
-                    socket.broadcast.to(partyID).emit("playerLeave_socket", { user: socket.planningData.user,
-                                                                              isOwner: isSocketOwner });
+                    socket.broadcast.to(partyID).emit("playerLeave_socket", socket.planningData );
             }     
             socket.planningData = {};
         })
